@@ -19,18 +19,26 @@ fn main() {
     let mut fortunes: Vec<String> = Vec::new();
     let mut fortune: String = String::new();
     for line in reader.lines() {
-        let line = line.unwrap();
-        if line == "%" {
-            fortunes.push(fortune);
-            fortune = String::new();
-        } else {
-            fortune.push_str(&line);
-            fortune.push('\n');
+        match line {
+            Ok(p) if p == "%" => {
+                if !fortune.trim().is_empty() {
+                    fortunes.push(fortune);
+                }
+                fortune = String::new();
+            }
+            Ok(line) => {
+                fortune.push_str(&line);
+                fortune.push('\n');
+            }
+            Err(err) => {
+                println!("{err}");
+                return;
+            }
         }
     }
     let mut rng = rand::thread_rng();
     let i = rng.gen_range(0..fortunes.len());
-    println!("{}", fortunes[i]);
+    print!("{}", fortunes[i]);
 }
 
 fn parse_args() -> Result<String, Box<dyn Error>> {
