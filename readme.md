@@ -34,4 +34,5 @@ variable FORTUNE_FILE will be used. If neither is available, fortune will abort.
       ```
 
 3. result
+
     ![out put demo](images/demo.jpeg)
