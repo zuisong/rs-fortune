@@ -1,8 +1,15 @@
 [package]
+edition = "2021"
 name = "rs-fortune"
 version = "0.1.0"
-edition = "2021"
-
 
 [dependencies]
 rand = "0.8.5"
+
+# https://github.com/johnthagen/min-sized-rust
+[profile.release]
+codegen-units = 1 
+lto = true 
+opt-level = "z" # Optimize for size.
+panic = "abort" 
+strip = true
