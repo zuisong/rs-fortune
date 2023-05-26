@@ -1,7 +1,7 @@
 # rs-fortune
 
 ```txt
-rs-fortune version 0.1.0
+rs-fortune
 
 Usage:
   rs-fortune [/path/to/fortune/cookie/file]

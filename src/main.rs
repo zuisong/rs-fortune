@@ -5,8 +5,6 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-const VERSION: &str = "0.1.0";
-
 fn main() {
     let fortune_file = match parse_args() {
         Ok(s) => s,
@@ -39,7 +37,7 @@ fn parse_args() -> Result<String, Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     let prog = Path::new(&args[0]).file_name().unwrap().to_str().unwrap();
     let usage = format!(
-        "{prog} version {VERSION}
+        "{prog}
 
 Usage:
   {prog} [/path/to/fortune/cookie/file]
