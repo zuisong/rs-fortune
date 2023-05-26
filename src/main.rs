@@ -53,6 +53,9 @@ fn main() {
     if !fortune.trim().is_empty() {
         fortunes.push(fortune);
     }
+    if fortunes.is_empty() {
+        return;
+    }
     let mut rng = rand::thread_rng();
     let i = rng.gen_range(0..fortunes.len());
     print!("{}", fortunes[i]);
