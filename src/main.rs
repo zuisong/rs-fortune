@@ -14,6 +14,20 @@ fn main() {
         }
     };
     let path = Path::new(&fortune_file);
+
+    match path {
+        _ if path.is_file() => (),
+        _ => {
+            if !path.exists() {
+                println!("The forunte file '{fortune_file}' does not exists");
+            }
+            if path.is_dir() {
+                println!("The forunte file '{fortune_file}' is a directory");
+            }
+            return;
+        }
+    };
+
     let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
     let mut fortunes: Vec<String> = Vec::new();
@@ -36,6 +50,9 @@ fn main() {
             }
         }
     }
+    if !fortune.trim().is_empty() {
+        fortunes.push(fortune);
+    }
     let mut rng = rand::thread_rng();
     let i = rng.gen_range(0..fortunes.len());
     print!("{}", fortunes[i]);
@@ -57,8 +74,10 @@ variable FORTUNE_FILE will be used. If neither is available, fortune will abort.
 
     match args.len() {
         1 => Ok(env::var("FORTUNE_FILE").map_err(|_| usage.clone())?),
-        2 if args[1] == "-h" || args[1] == "--help" => Err(usage.into()),
-        2 => Ok(args[1].clone()),
+        2 => match args[1].as_str() {
+            "-h" | "--help" => Err(usage.into()),
+            x => Ok(x.to_string()),
+        },
         _ => Err(usage.into()),
     }
 }
