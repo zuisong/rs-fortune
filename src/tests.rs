@@ -1,7 +1,7 @@
 extern crate assert_cmd;
 extern crate predicates;
 
-use assert_cmd::prelude::*;
+use assert_cmd::{crate_name, prelude::*};
 use std::process::Command;
 
 #[test]
@@ -11,41 +11,37 @@ fn test_ok() {
 
 #[test]
 fn calling_with_not_exists_file() {
-    let mut cmd = Command::cargo_bin("rs-fortune").unwrap();
-
-    cmd.args(&["wwww.shouldnotwork.com"])
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["wwww.shouldnotwork.com"])
         .assert()
-        .success()
-        .stdout(predicates::str::contains(
+        .failure()
+        .stderr(predicates::str::contains(
             r#"The forunte file 'wwww.shouldnotwork.com' does not exists"#,
         ));
 }
 
 #[test]
 fn calling_with_help() {
-    let mut cmd = Command::cargo_bin("rs-fortune").unwrap();
-    cmd.args(&["-h"])
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["-h"])
         .assert()
         .success()
         .stdout(predicates::str::contains(
-            r#"
-If the fortune cookie file path is omitted, the contents of environment
-variable FORTUNE_FILE will be used. If neither is available, fortune will abort.
-"#
-            .trim(),
+            r#"The fortune cookie file path"#.trim(),
         ));
 }
 
 #[test]
 fn calling_with_read_file_from_commandline() {
-    Command::cargo_bin("rs-fortune")
+    Command::cargo_bin(crate_name!())
         .unwrap()
         .args(&["Cargo.toml"])
         .assert()
+        .success()
         .stdout(predicates::str::contains(
             r#"
-[package]
-edition = "2021"
 name = "rs-fortune"
 "#
             .trim(),
@@ -53,8 +49,20 @@ name = "rs-fortune"
 }
 
 #[test]
+fn calling_with_read_dir_from_commandline() {
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["src"])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains(
+            r#"The forunte file 'src' is a directory"#.trim(),
+        ));
+}
+
+#[test]
 fn calling_with_read_file_from_env() {
-    Command::cargo_bin("rs-fortune")
+    Command::cargo_bin(crate_name!())
         .unwrap()
         .args(&["Cargo.toml"])
         .env("FORTUNE_FILE", "Cargo.toml")
@@ -62,10 +70,19 @@ fn calling_with_read_file_from_env() {
         .success()
         .stdout(predicates::str::contains(
             r#"
-[package]
-edition = "2021"
 name = "rs-fortune"
 "#
             .trim(),
         ));
+}
+
+#[test]
+fn calling_with_print_shell_completions() {
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["--completion", "zsh"])
+        .env("FORTUNE_FILE", "Cargo.toml")
+        .assert()
+        .success()
+        .stdout(predicates::str::contains("rs-fortune"));
 }

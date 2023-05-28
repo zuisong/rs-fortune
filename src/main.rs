@@ -1,50 +1,47 @@
+use clap::{Command, CommandFactory, Parser};
+use clap_complete::{generate, Generator, Shell};
 use rand::Rng;
-use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::Path;
-#[cfg(test)]
-mod tests;
-fn main() {
-    let fortune_file_path = match parse_args() {
-        Ok(s) => s,
-        Err(e) => return println!("{e}"),
-    };
+use std::{
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader},
+    path::Path,
+    process,
+};
 
-    let fortunes = match Fortunes::from_file(&fortune_file_path) {
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about)]
+struct Args {
+    /// The fortune cookie file path
+    #[arg(env = "FORTUNE_FILE")]
+    file: String,
+    // If provided, outputs the completion file for given shell
+    #[arg(long = "completion", value_enum)]
+    completion: Option<Shell>,
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut std::io::stdout());
+}
+
+fn main() {
+    let args = Args::parse();
+
+    if let Some(shell) = args.completion {
+        print_completions(shell, &mut Args::command());
+        return;
+    }
+
+    let fortunes = match Fortunes::from_file(&args.file) {
         Ok(s) => s,
-        Err(e) => return println!("{e}"),
+        Err(e) => {
+            eprintln!("{e}");
+            process::exit(-1)
+        }
     };
 
     fortunes.choose_one();
 }
-
-fn parse_args() -> Result<String, Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    let prog = Path::new(&args[0]).file_name().unwrap().to_str().unwrap();
-    let usage = format!(
-        "{prog}
-
-Usage:
-  {prog} [/path/to/fortune/cookie/file]
-  {prog} -h|--help
-
-If the fortune cookie file path is omitted, the contents of environment
-variable FORTUNE_FILE will be used. If neither is available, fortune will abort.
-"
-    );
-
-    match args.len() {
-        1 => Ok(env::var("FORTUNE_FILE").map_err(|_| usage.clone())?),
-        2 => match args[1].as_str() {
-            "-h" | "--help" => Err(usage.into()),
-            x => Ok(x.to_string()),
-        },
-        _ => Err(usage.into()),
-    }
-}
-
 struct Fortunes(Vec<String>);
 
 impl Fortunes {
@@ -92,3 +89,6 @@ impl Fortunes {
         print!("{}", fortunes[i]);
     }
 }
+
+#[cfg(test)]
+mod tests;

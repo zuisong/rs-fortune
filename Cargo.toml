@@ -1,9 +1,13 @@
 [package]
+authors = ["zuisong"]
+description = "A rust version of fortune"
 edition = "2021"
 name = "rs-fortune"
 version = "0.2.0"
 
 [dependencies]
+clap = {version = "4.3.0", features = ["derive", "env"]}
+clap_complete = "4.3.0"
 rand = "0.8.5"
 
 # https://github.com/johnthagen/min-sized-rust
@@ -12,7 +16,7 @@ codegen-units = 1
 lto = true 
 opt-level = "z" # Optimize for size.
 panic = "abort" 
-strip = true
+strip = true 
 
 [dev-dependencies]
 assert_cmd = "2.0.11"
