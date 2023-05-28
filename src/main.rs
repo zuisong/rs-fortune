@@ -4,7 +4,8 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-
+#[cfg(test)]
+mod tests;
 fn main() {
     let fortune_file_path = match parse_args() {
         Ok(s) => s,
