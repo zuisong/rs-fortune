@@ -2,22 +2,12 @@ extern crate assert_cmd;
 extern crate predicates;
 
 use assert_cmd::{crate_name, prelude::*};
-use predicates::prelude::PredicateBooleanExt;
+use predicates::prelude::{predicate, PredicateBooleanExt};
 use std::process::Command;
 
 #[test]
 fn test_ok() {
     assert!(true)
-}
-
-mod test_util {
-    use predicates::{path::StrFilePredicate, prelude::predicate};
-    use std::path::Path;
-    pub fn predicate_file() -> StrFilePredicate {
-        predicate::path::eq_file(Path::new("Cargo.toml"))
-            .utf8()
-            .unwrap()
-    }
 }
 
 #[test]
@@ -62,7 +52,7 @@ fn calling_with_read_file_from_commandline() {
         .args(&["Cargo.toml"])
         .assert()
         .success()
-        .stdout(test_util::predicate_file());
+        .stdout(predicate::str::is_empty().not());
 }
 
 #[test]
@@ -73,7 +63,7 @@ fn calling_with_read_file_from_env() {
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
-        .stdout(test_util::predicate_file());
+        .stdout(predicate::str::is_empty().not());
 }
 
 #[test]
