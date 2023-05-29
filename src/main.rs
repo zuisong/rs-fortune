@@ -44,13 +44,13 @@ fn main() {
 struct Fortunes(Vec<String>);
 
 impl Fortunes {
-    pub fn from_file(fortune_file: &String) -> Result<Fortunes, Box<dyn Error>> {
-        let path = Path::new(&fortune_file);
+    pub fn from_file(fortune_path: &String) -> Result<Fortunes, Box<dyn Error>> {
+        let path = Path::new(&fortune_path);
         if !path.exists() {
-            return Err(format!("The forunte file '{fortune_file}' does not exists").into());
+            return Err(format!("The forunte file '{fortune_path}' does not exists").into());
         }
         if path.is_dir() {
-            return Err(format!("The forunte file '{fortune_file}' is a directory").into());
+            return Err(format!("The forunte file '{fortune_path}' is a directory").into());
         }
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);

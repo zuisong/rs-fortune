@@ -1,38 +1,67 @@
 # rs-fortune
 
-## Document
+[🇨🇳 中文版 Readme](./readme-cn.md)
 
-```txt
-rs-fortune
+`rs-fortune` is a simple Rust command-line tool that prints random fortune entries.
 
-Usage:
-  rs-fortune [/path/to/fortune/cookie/file]
-  rs-fortune -h|--help
+## Installation
 
-If the fortune cookie file path is omitted, the contents of environment
-variable FORTUNE_FILE will be used. If neither is available, fortune will abort.
-```
+- Download and install from the [Release page](https://github.com/zuisong/rs-fortune/releases)
+- Install via Cargo:
 
-## Useage
-
-1. download fortune file
-
-    ```shell
-    curl https://github.com/ruanyf/fortunes/raw/master/data/fortunes -l -o fortunes.txt
+    ```bash
+    cargo install --git https://github.com/zuisong/rs-fortune
     ```
 
-2. run rs-fortune
+- MacOS users can install via Homebrew:
 
-      ```shell
-      rs-fortune fortunes.txt
-      ```
+    ```bash
+    brew install zuisong/tap/rs-fortune
+    ```
 
-      or
+## Usage
 
-      ```shell
-      FORTUNE_FILE=fortunes.txt rs-fortune
-      ```
+```txt
+rs-fortune [options] <fortune file>
+Options:
 
-3. result
+--help - Print help information
+--completion <shell> - Generate shell completion script for <shell>, where <shell> can be bash, zsh, fish, etc.
+```
 
-    ![out put demo](images/demo.jpeg)
+`<fortune file>` is a text file containing fortune entries, separated by `%` on a line of its own.
+
+`rs-fortune` also supports reading `<fortune file>` path from the `FORTUNE_FILE` environment variable:
+
+```bash
+FORTUNE_FILE=fortunes.txt rs-fortune
+```
+
+If both command-line arguments and environment variables are provided, the command-line arguments take precedence.
+
+For example, if a fortune file named `fortunes.txt` contains:
+
+```txt
+Fortune favors the bold.
+%
+The early bird gets the worm.
+%
+Slow and steady wins the race.
+```
+
+You can use it like this:
+
+```bash
+rs-fortune fortunes.txt
+# May output "Fortune favors the bold."
+
+FORTUNE_FILE=fortunes.txt rs-fortune 
+### You can also read the fortune file path from an environment variable
+
+rs-fortune --help  
+# Print help information
+```
+
+If `<fortune file>` or `FORTUNE_FILE` environment variable is not specified, it will print a default fortune.
+
+This is a simple and practical command-line tool that can be used to print random quotes and sayings. Feedback and suggestions for improvement are welcome!
