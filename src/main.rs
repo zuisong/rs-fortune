@@ -14,8 +14,7 @@ use std::{
 struct Args {
     /// The fortune cookie file path
     #[arg(env = "FORTUNE_FILE")]
-    file: String,
-    // If provided, outputs the completion file for given shell
+    fortune_file: Option<String>,
     #[arg(long = "completion", value_enum)]
     completion: Option<Shell>,
 }
@@ -31,16 +30,16 @@ fn main() {
         print_completions(shell, &mut Args::command());
         return;
     }
-
-    let fortunes = match Fortunes::from_file(&args.file) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("{e}");
-            process::exit(-1)
-        }
-    };
-
-    fortunes.choose_one();
+    if let Some(fortune_file) = args.fortune_file {
+        Fortunes::from_file(&fortune_file)
+            .unwrap_or_else(|e| {
+                eprintln!("{e}");
+                process::exit(-1)
+            })
+            .choose_one();
+        return;
+    }
+    Args::command().print_help().unwrap();
 }
 struct Fortunes(Vec<String>);
 
