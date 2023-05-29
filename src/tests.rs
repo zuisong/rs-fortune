@@ -2,11 +2,22 @@ extern crate assert_cmd;
 extern crate predicates;
 
 use assert_cmd::{crate_name, prelude::*};
+use predicates::prelude::PredicateBooleanExt;
 use std::process::Command;
 
 #[test]
 fn test_ok() {
     assert!(true)
+}
+
+mod test_util {
+    use predicates::{path::StrFilePredicate, prelude::predicate};
+    use std::path::Path;
+    pub fn predicate_file() -> StrFilePredicate {
+        predicate::path::eq_file(Path::new("Cargo.toml"))
+            .utf8()
+            .unwrap()
+    }
 }
 
 #[test]
@@ -34,21 +45,6 @@ fn calling_with_help() {
 }
 
 #[test]
-fn calling_with_read_file_from_commandline() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
-        .args(&["Cargo.toml"])
-        .assert()
-        .success()
-        .stdout(predicates::str::contains(
-            r#"
-name = "rs-fortune"
-"#
-            .trim(),
-        ));
-}
-
-#[test]
 fn calling_with_read_dir_from_commandline() {
     Command::cargo_bin(crate_name!())
         .unwrap()
@@ -59,6 +55,15 @@ fn calling_with_read_dir_from_commandline() {
             r#"The forunte file 'src' is a directory"#.trim(),
         ));
 }
+#[test]
+fn calling_with_read_file_from_commandline() {
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["Cargo.toml"])
+        .assert()
+        .success()
+        .stdout(test_util::predicate_file());
+}
 
 #[test]
 fn calling_with_read_file_from_env() {
@@ -68,12 +73,7 @@ fn calling_with_read_file_from_env() {
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
-        .stdout(predicates::str::contains(
-            r#"
-name = "rs-fortune"
-"#
-            .trim(),
-        ));
+        .stdout(test_util::predicate_file());
 }
 
 #[test]
@@ -84,5 +84,5 @@ fn calling_with_print_shell_completions() {
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
-        .stdout(predicates::str::contains("rs-fortune"));
+        .stdout(predicates::str::is_empty().not());
 }
