@@ -55,11 +55,14 @@ You can use it like this:
 rs-fortune fortunes.txt
 # May output "Fortune favors the bold."
 
-FORTUNE_FILE=fortunes.txt rs-fortune 
 ### You can also read the fortune file path from an environment variable
+FORTUNE_FILE=fortunes.txt rs-fortune 
 
-rs-fortune --help  
+### And it can read fortunes from pipeline
+cat fortunes.txt | rs-fortune  
+
 # Print help information
+rs-fortune --help  
 ```
 
 If `<fortune file>` or `FORTUNE_FILE` environment variable is not specified, it will print a default fortune.

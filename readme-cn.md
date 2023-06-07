@@ -54,11 +54,14 @@ rs-fortune fortunes.txt
 # 可能输出  
 # Fortune favors the bold  
 
-FORTUNE_FILE=fortunes.txt rs-fortune  
 ### 也可以从环境变量读取 fortune 文件路径
+FORTUNE_FILE=fortunes.txt rs-fortune  
 
-rs-fortune --help  
+### 也可以从管道中读取 fortunes
+cat fortunes.txt | rs-fortune  
+
 # 打印帮助信息
+rs-fortune --help  
 ```
 
 如果不传入 `<fortune文件>` 或 `FORTUNE_FILE` 环境变量,将打印一条默认的 fortune
