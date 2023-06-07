@@ -4,7 +4,7 @@ use rand::Rng;
 use std::{
     error::Error,
     fs::File,
-    io::{stdin, IsTerminal, Read},
+    io::{stdin, Read, IsTerminal},
     path::Path,
     process,
 };
