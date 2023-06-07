@@ -4,7 +4,7 @@ use rand::Rng;
 use std::{
     error::Error,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{stdin, IsTerminal, Read},
     path::Path,
     process,
 };
@@ -23,11 +23,31 @@ fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
     generate(gen, cmd, cmd.get_name().to_string(), &mut std::io::stdout());
 }
 
+pub fn read_pipe() -> Option<String> {
+    let mut buf = String::new();
+    if !stdin().is_terminal() {
+        std::io::stdin().read_to_string(&mut buf).ok()?;
+    }
+
+    (!buf.trim().is_empty()).then_some(buf.trim().into())
+}
+
 fn main() {
     let args = Args::parse();
 
     if let Some(shell) = args.completion {
         print_completions(shell, &mut Args::command());
+        return;
+    }
+
+    if let Some(buf) = read_pipe() {
+        // read fortune data from pipe
+        Fortunes::new(buf)
+            .unwrap_or_else(|e| {
+                eprintln!("{e}");
+                process::exit(-1)
+            })
+            .choose_one();
         return;
     }
     if let Some(fortune_file) = args.fortune_file {
@@ -44,6 +64,15 @@ fn main() {
 struct Fortunes(Vec<String>);
 
 impl Fortunes {
+    pub fn new(content: String) -> Result<Fortunes, Box<dyn Error>> {
+        let fortunes: Vec<String> = content
+            .split("\n%\n")
+            .into_iter()
+            .map(|it| it.to_string())
+            .collect();
+        return Ok(Fortunes(fortunes));
+    }
+
     pub fn from_file(fortune_path: &String) -> Result<Fortunes, Box<dyn Error>> {
         let path = Path::new(&fortune_path);
         if !path.exists() {
@@ -52,30 +81,11 @@ impl Fortunes {
         if path.is_dir() {
             return Err(format!("The forunte file '{fortune_path}' is a directory").into());
         }
-        let file = File::open(path).unwrap();
-        let reader = BufReader::new(file);
-        let mut fortunes: Vec<String> = Vec::new();
-        let mut fortune: String = String::new();
+        let mut file = File::open(path).unwrap();
+        let mut buf = String::new();
+        file.read_to_string(&mut buf)?;
 
-        for line in reader.lines() {
-            match line {
-                Ok(p) if p == "%" => {
-                    if !fortune.trim().is_empty() {
-                        fortunes.push(fortune);
-                    }
-                    fortune = String::new();
-                }
-                Ok(line) => {
-                    fortune.push_str(&line);
-                    fortune.push('\n');
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-        if !fortune.trim().is_empty() {
-            fortunes.push(fortune);
-        }
-        Ok(Fortunes(fortunes))
+        return Self::new(buf);
     }
 
     pub fn choose_one(&self) {
@@ -85,7 +95,7 @@ impl Fortunes {
         }
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0..fortunes.len());
-        print!("{}", fortunes[i]);
+        println!("{}", fortunes[i]);
     }
 }
 

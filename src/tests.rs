@@ -1,13 +1,23 @@
 extern crate assert_cmd;
 extern crate predicates;
 
-use assert_cmd::{crate_name, prelude::*};
+use assert_cmd::{assert::Assert, crate_name, Command};
 use predicates::prelude::{predicate, PredicateBooleanExt};
-use std::process::Command;
 
 #[test]
 fn test_ok() {
     assert!(true)
+}
+
+trait DBG {
+    fn dbg(&self) -> &Self;
+}
+
+impl DBG for Assert {
+    fn dbg(&self) -> &Self {
+        dbg!(self);
+        return self;
+    }
 }
 
 #[test]
@@ -19,7 +29,8 @@ fn calling_with_not_exists_file() {
         .failure()
         .stderr(predicates::str::contains(
             r#"The forunte file 'wwww.shouldnotwork.com' does not exists"#,
-        ));
+        ))
+        .dbg();
 }
 
 #[test]
@@ -31,7 +42,8 @@ fn calling_with_help() {
         .success()
         .stdout(predicates::str::contains(
             r#"The fortune cookie file path"#.trim(),
-        ));
+        ))
+        .dbg();
 }
 
 #[test]
@@ -42,8 +54,9 @@ fn calling_with_read_dir_from_commandline() {
         .assert()
         .failure()
         .stderr(predicates::str::contains(
-            r#"The forunte file 'src' is a directory"#.trim(),
-        ));
+            r#"The forunte file 'src' is a directory"#,
+        ))
+        .dbg();
 }
 #[test]
 fn calling_with_read_file_from_commandline() {
@@ -52,7 +65,8 @@ fn calling_with_read_file_from_commandline() {
         .args(&["Cargo.toml"])
         .assert()
         .success()
-        .stdout(predicate::str::is_empty().not());
+        .stdout(predicate::str::is_empty().not())
+        .dbg();
 }
 
 #[test]
@@ -63,7 +77,20 @@ fn calling_with_read_file_from_env() {
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
-        .stdout(predicate::str::is_empty().not());
+        .stdout(predicate::str::is_empty().not())
+        .dbg();
+}
+
+#[test]
+fn calling_with_read_fortune_from_pipe() {
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .pipe_stdin("./Cargo.toml")
+        .unwrap()
+        .assert()
+        .success()
+        .stdout(predicate::str::is_empty().not())
+        .dbg();
 }
 
 #[test]
@@ -74,5 +101,6 @@ fn calling_with_print_shell_completions() {
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
-        .stdout(predicates::str::is_empty().not());
+        .stdout(predicates::str::starts_with("#compdef rs-fortune"))
+        .dbg();
 }
