@@ -4,9 +4,8 @@ use rand::Rng;
 use std::{
     error::Error,
     fs::File,
-    io::{stdin, Read, IsTerminal},
+    io::{self, stdin, stdout, IsTerminal, Read},
     path::Path,
-    process,
 };
 
 #[derive(Parser, Debug)]
@@ -20,47 +19,36 @@ struct Args {
 }
 
 fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut std::io::stdout());
+    generate(gen, cmd, cmd.get_name().to_string(), &mut stdout());
 }
 
 pub fn read_pipe() -> Option<String> {
     let mut buf = String::new();
     if !stdin().is_terminal() {
-        std::io::stdin().read_to_string(&mut buf).ok()?;
+        stdin().read_to_string(&mut buf).ok()?;
     }
-
     (!buf.trim().is_empty()).then_some(buf.trim().into())
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-
     if let Some(shell) = args.completion {
         print_completions(shell, &mut Args::command());
-        return;
+        return Ok(());
     }
 
     if let Some(buf) = read_pipe() {
         // read fortune data from pipe
-        Fortunes::new(buf)
-            .unwrap_or_else(|e| {
-                eprintln!("{e}");
-                process::exit(-1)
-            })
-            .choose_one();
-        return;
+        Fortunes::new(buf)?.choose_one();
+    } else if let Some(ref fortune_file) = args.fortune_file {
+        Fortunes::from_file(fortune_file)?.choose_one();
+    } else {
+        Args::command().print_help()?;
     }
-    if let Some(fortune_file) = args.fortune_file {
-        Fortunes::from_file(&fortune_file)
-            .unwrap_or_else(|e| {
-                eprintln!("{e}");
-                process::exit(-1)
-            })
-            .choose_one();
-        return;
-    }
-    Args::command().print_help().unwrap();
+
+    Ok(())
 }
+
 struct Fortunes(Vec<String>);
 
 impl Fortunes {
@@ -70,22 +58,30 @@ impl Fortunes {
             .into_iter()
             .map(|it| it.to_string())
             .collect();
-        return Ok(Fortunes(fortunes));
+        Ok(Self(fortunes))
     }
 
     pub fn from_file(fortune_path: &String) -> Result<Fortunes, Box<dyn Error>> {
         let path = Path::new(&fortune_path);
         if !path.exists() {
-            return Err(format!("The forunte file '{fortune_path}' does not exists").into());
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("The fortune file '{fortune_path}' does not exist"),
+            )
+            .into());
         }
         if path.is_dir() {
-            return Err(format!("The forunte file '{fortune_path}' is a directory").into());
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("'{fortune_path}' is a directory, not a file"),
+            )
+            .into());
         }
-        let mut file = File::open(path).unwrap();
+        let mut file = File::open(path)?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
 
-        return Self::new(buf);
+        Self::new(buf)
     }
 
     pub fn choose_one(&self) {

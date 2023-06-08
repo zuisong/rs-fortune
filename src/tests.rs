@@ -5,8 +5,13 @@ use assert_cmd::{assert::Assert, crate_name, Command};
 use predicates::prelude::{predicate, PredicateBooleanExt};
 
 #[test]
-fn test_ok() {
+fn _test_ok() {
     assert!(true)
+}
+
+#[test]
+fn _test_build_ok() {
+    Command::new("cargo").args(&["build"]).assert().success();
 }
 
 trait DBG {
@@ -28,7 +33,7 @@ fn calling_with_not_exists_file() {
         .assert()
         .failure()
         .stderr(predicates::str::contains(
-            r#"The forunte file 'wwww.shouldnotwork.com' does not exists"#,
+            "The fortune file 'wwww.shouldnotwork.com' does not exist",
         ))
         .dbg();
 }
@@ -54,7 +59,7 @@ fn calling_with_read_dir_from_commandline() {
         .assert()
         .failure()
         .stderr(predicates::str::contains(
-            r#"The forunte file 'src' is a directory"#,
+            "'src' is a directory, not a file",
         ))
         .dbg();
 }
