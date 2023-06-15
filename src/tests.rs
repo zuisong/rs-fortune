@@ -109,3 +109,52 @@ fn calling_with_print_shell_completions() {
         .stdout(predicates::str::starts_with("#compdef rs-fortune"))
         .dbg();
 }
+
+use std::{fs::File, io::Write};
+#[test]
+fn calling_with_empty_file() {
+    let file = File::create("empty.txt").unwrap();
+    drop(file);
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["empty.txt"])
+        .assert()
+        .success()
+        .stdout("\n")
+        .dbg();
+    std::fs::remove_file("empty.txt").unwrap();
+}
+
+#[test]
+fn calling_with_invalid_encoding() {
+    let mut file = File::create("invalid.txt").unwrap();
+    file.write_all(b"\xFF").unwrap();
+    drop(file);
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["invalid.txt"])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains(
+            "Error: Error { kind: InvalidData, message: \"stream did not contain valid UTF-8",
+        ))
+        .dbg();
+    std::fs::remove_file("invalid.txt").unwrap();
+}
+
+#[test]
+fn calling_with_non_existent_shell() {
+    Command::cargo_bin(crate_name!())
+        .unwrap()
+        .args(&["--completion", "invalid"])
+        .assert()
+        .failure()
+        .stderr(
+            predicates::str::contains(
+                "error: invalid value 'invalid' for '--completion <COMPLETION>'",
+            )
+            .and(predicates::str::contains(
+                "[possible values: bash, elvish, fish, powershell, zsh]",
+            )),
+        );
+}
