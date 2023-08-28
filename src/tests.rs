@@ -102,7 +102,7 @@ fn calling_with_read_fortune_from_pipe() {
 fn calling_with_print_shell_completions() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["--completion", "zsh"])
+        .args(&["completions", "-s", "zsh"])
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
@@ -146,15 +146,12 @@ fn calling_with_invalid_encoding() {
 fn calling_with_non_existent_shell() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["--completion", "invalid"])
+        .args(&["completions", "-s", "invalid"])
         .assert()
         .failure()
         .stderr(
-            predicates::str::contains(
-                "error: invalid value 'invalid' for '--completion <COMPLETION>'",
-            )
-            .and(predicates::str::contains(
-                "[possible values: bash, elvish, fish, powershell, zsh]",
-            )),
+            predicates::str::contains("error: invalid value 'invalid' for '--shell <SHELL>'").and(
+                predicates::str::contains("[possible values: bash, elvish, fish, powershell, zsh]"),
+            ),
         );
 }

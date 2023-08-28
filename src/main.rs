@@ -11,11 +11,20 @@ use std::{
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about)]
 struct Args {
+    #[command(subcommand)]
+    command: Option<SubCommand>,
+
     /// The fortune cookie file path
     #[arg(env = "FORTUNE_FILE")]
     fortune_file: Option<String>,
-    #[arg(long = "completion", value_enum)]
-    completion: Option<Shell>,
+}
+#[derive(Parser, Debug, Clone)]
+enum SubCommand {
+    /// Generate tab-completion scripts for your shell
+    Completions {
+        #[arg(long = "shell", short = 's', value_enum)]
+        shell: Shell,
+    },
 }
 
 fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
@@ -32,18 +41,21 @@ pub fn read_pipe() -> Option<String> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-    if let Some(shell) = args.completion {
-        print_completions(shell, &mut Args::command());
-        return Ok(());
-    }
 
-    if let Some(input) = read_pipe() {
-        // read fortune data from pipe
-        Fortunes::new(input)?.choose_one();
-    } else if let Some(ref path) = args.fortune_file {
-        Fortunes::from_file(path)?.choose_one();
-    } else {
-        Args::command().print_help()?;
+    match args.command {
+        Some(SubCommand::Completions { shell }) => {
+            print_completions(shell, &mut Args::command());
+        }
+        None => {
+            if let Some(input) = read_pipe() {
+                // read fortune data from pipe
+                Fortunes::new(input)?.choose_one();
+            } else if let Some(ref path) = args.fortune_file {
+                Fortunes::from_file(path)?.choose_one();
+            } else {
+                Args::command().print_help()?;
+            }
+        }
     }
 
     Ok(())
