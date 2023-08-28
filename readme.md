@@ -22,11 +22,20 @@
 ## Usage
 
 ```txt
-rs-fortune [options] <fortune file>
-Options:
+A rust version of fortune
 
---help - Print help information
---completion <shell> - Generate shell completion script for <shell>, where <shell> can be bash, zsh, fish, etc.
+Usage: rs-fortune [FORTUNE_FILE] [COMMAND]
+
+Commands:
+  completions  Generate tab-completion scripts for your shell
+  help         Print this message or the help of the given subcommand(s)
+
+Arguments:
+  [FORTUNE_FILE]  The fortune cookie file path [env: FORTUNE_FILE=/Users/chen/.config/fish/kindle.txt]
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 `<fortune file>` is a text file containing fortune entries, separated by `%` on a line of its own.

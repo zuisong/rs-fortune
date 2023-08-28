@@ -20,11 +20,20 @@
 ## 用法
 
 ```txt
-rs-fortune [选项] <fortune文件>
-选项:
+A rust version of fortune
 
---help - 打印帮助信息
---completion <shell> - 生成shell补全脚本,<shell>可以是bash、zsh、fish等
+Usage: rs-fortune [FORTUNE_FILE] [COMMAND]
+
+Commands:
+  completions  Generate tab-completion scripts for your shell
+  help         Print this message or the help of the given subcommand(s)
+
+Arguments:
+  [FORTUNE_FILE]  The fortune cookie file path [env: FORTUNE_FILE=/Users/chen/.config/fish/kindle.txt]
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 `<fortune文件>` 是包含 fortune 条目的文本文件, 每条 fortune 之间用独占一行的一个 % 分隔。
