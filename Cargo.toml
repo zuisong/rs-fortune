@@ -6,8 +6,8 @@ name = "rs-fortune"
 version = "0.7.0"
 
 [dependencies]
-clap = {version = "4.4.0", features = ["derive", "env"]}
-clap_complete = "4.4.0"
+clap = {version = "4.4.10", features = ["derive", "env"]}
+clap_complete = "4.4.4"
 rand = "0.8.5"
 
 # https://github.com/johnthagen/min-sized-rust
@@ -20,4 +20,4 @@ strip = true
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
-predicates = "3.0.3"
+predicates = "3.0.4"
