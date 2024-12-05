@@ -3,7 +3,7 @@ authors = ["zuisong"]
 description = "A rust version of fortune"
 edition = "2021"
 name = "rs-fortune"
-version = "0.8.0"
+version = "0.9.0"
 
 [dependencies]
 clap = {version = "4.5.0", features = ["derive", "env"]}
