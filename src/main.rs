@@ -1,6 +1,5 @@
 use clap::{Command, CommandFactory, Parser};
 use clap_complete::{generate, Generator, Shell};
-use rand::Rng;
 use std::{
     error::Error,
     fs::File,
@@ -101,8 +100,8 @@ impl Fortunes {
         if fortunes.is_empty() {
             return;
         }
-        let mut rng = rand::thread_rng();
-        let index = rng.gen_range(0..fortunes.len());
+
+        let index =  fastrand::usize(0..fortunes.len());
         println!("{}", fortunes[index]);
     }
 }
