@@ -1,27 +1,35 @@
 extern crate assert_cmd;
 extern crate predicates;
 
-use assert_cmd::{assert::Assert, crate_name, Command};
-use predicates::prelude::{predicate, PredicateBooleanExt};
+use assert_cmd::{Command, assert::Assert, crate_name};
+use predicates::{
+    prelude::{PredicateBooleanExt as _, predicate},
+    str::contains,
+};
 
 #[test]
 fn _test_ok() {
-    assert!(true)
+    assert_eq!(2 + 2, 4);
+}
+#[test]
+#[should_panic]
+fn _test_error() {
+    panic!("This is a test error")
 }
 
 #[test]
 fn _test_build_ok() {
-    Command::new("cargo").args(&["build"]).assert().success();
+    Command::new("cargo").args(["build"]).assert().success();
 }
 
-trait DBG {
+trait Dbg {
     fn dbg(&self) -> &Self;
 }
 
-impl DBG for Assert {
+impl Dbg for Assert {
     fn dbg(&self) -> &Self {
         dbg!(self);
-        return self;
+        self
     }
 }
 
@@ -29,10 +37,10 @@ impl DBG for Assert {
 fn calling_with_not_exists_file() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["wwww.shouldnotwork.com"])
+        .args(["wwww.shouldnotwork.com"])
         .assert()
         .failure()
-        .stderr(predicates::str::contains(
+        .stderr(contains(
             "The fortune file 'wwww.shouldnotwork.com' does not exist",
         ))
         .dbg();
@@ -42,12 +50,10 @@ fn calling_with_not_exists_file() {
 fn calling_with_help() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["-h"])
+        .args(["-h"])
         .assert()
         .success()
-        .stdout(predicates::str::contains(
-            r#"The fortune cookie file path"#.trim(),
-        ))
+        .stdout(contains(r#"The fortune cookie file path"#.trim()))
         .dbg();
 }
 
@@ -55,19 +61,17 @@ fn calling_with_help() {
 fn calling_with_read_dir_from_commandline() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["src"])
+        .args(["src"])
         .assert()
         .failure()
-        .stderr(predicates::str::contains(
-            "'src' is a directory, not a file",
-        ))
+        .stderr(contains("'src' is a directory, not a file"))
         .dbg();
 }
 #[test]
 fn calling_with_read_file_from_commandline() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["Cargo.toml"])
+        .args(["Cargo.toml"])
         .assert()
         .success()
         .stdout(predicate::str::is_empty().not())
@@ -78,7 +82,7 @@ fn calling_with_read_file_from_commandline() {
 fn calling_with_read_file_from_env() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["Cargo.toml"])
+        .args(["Cargo.toml"])
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
@@ -102,7 +106,7 @@ fn calling_with_read_fortune_from_pipe() {
 fn calling_with_print_shell_completions() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["completions", "-s", "zsh"])
+        .args(["completions", "-s", "zsh"])
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
         .success()
@@ -117,7 +121,7 @@ fn calling_with_empty_file() {
     drop(file);
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["empty.txt"])
+        .args(["empty.txt"])
         .assert()
         .success()
         .stdout("\n")
@@ -132,11 +136,11 @@ fn calling_with_invalid_encoding() {
     drop(file);
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["invalid.txt"])
+        .args(["invalid.txt"])
         .assert()
         .failure()
-        .stderr(predicates::str::contains(
-            "Error: Error { kind: InvalidData, message: \"stream did not contain valid UTF-8",
+        .stderr(contains(
+            r#"Error: Error { kind: InvalidData, message: "stream did not contain valid UTF-8"#,
         ))
         .dbg();
     std::fs::remove_file("invalid.txt").unwrap();
@@ -146,12 +150,13 @@ fn calling_with_invalid_encoding() {
 fn calling_with_non_existent_shell() {
     Command::cargo_bin(crate_name!())
         .unwrap()
-        .args(&["completions", "-s", "invalid"])
+        .args(["completions", "-s", "invalid"])
         .assert()
         .failure()
-        .stderr(
-            predicates::str::contains("error: invalid value 'invalid' for '--shell <SHELL>'").and(
-                predicates::str::contains("[possible values: bash, elvish, fish, powershell, zsh]"),
-            ),
-        );
+        .stderr(contains(
+            "error: invalid value 'invalid' for '--shell <SHELL>'",
+        ))
+        .stderr(contains(
+            "[possible values: bash, elvish, fish, powershell, zsh]",
+        ));
 }

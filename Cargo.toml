@@ -1,14 +1,15 @@
 [package]
 authors = ["zuisong"]
 description = "A rust version of fortune"
-edition = "2021"
+edition = "2024"
 name = "rs-fortune"
 version = "0.9.0"
+rust-version = "1.85"
 
 [dependencies]
-clap = {version = "4.5.0", features = ["derive", "env"]}
+clap = {version = "4.5.0", default-features = false, features = ["derive", "env", "help", "std", "suggestions"]}
 clap_complete = "4.5.0"
-fastrand = "2.2.0"
+fastrand = "2.3.0"
 
 # https://github.com/johnthagen/min-sized-rust
 [profile.release]

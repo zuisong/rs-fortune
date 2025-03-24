@@ -1,9 +1,9 @@
 use clap::{Command, CommandFactory, Parser};
-use clap_complete::{generate, Generator, Shell};
+use clap_complete::{Generator, Shell, generate};
 use std::{
     error::Error,
     fs::File,
-    io::{self, stdin, stdout, IsTerminal, Read},
+    io::{self, IsTerminal, Read, stdin, stdout},
     path::Path,
 };
 
@@ -26,8 +26,8 @@ enum SubCommand {
     },
 }
 
-fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut stdout());
+fn print_completions<G: Generator>(g: G, cmd: &mut Command) {
+    generate(g, cmd, cmd.get_name().to_string(), &mut stdout());
 }
 
 pub fn read_pipe() -> Option<String> {
@@ -64,11 +64,7 @@ struct Fortunes(Vec<String>);
 
 impl Fortunes {
     pub fn new(content: String) -> Result<Fortunes, Box<dyn Error>> {
-        let fortunes = content
-            .split("\n%\n")
-            .into_iter()
-            .map(|it| it.to_string())
-            .collect();
+        let fortunes = content.split("\n%\n").map(|it| it.to_string()).collect();
         Ok(Self(fortunes))
     }
 
@@ -96,13 +92,14 @@ impl Fortunes {
     }
 
     pub fn choose_one(&self) {
-        let fortunes = &self.0;
+        let Fortunes(fortunes) = &self;
         if fortunes.is_empty() {
             return;
         }
 
-        let index =  fastrand::usize(0..fortunes.len());
-        println!("{}", fortunes[index]);
+        if let Some(fortune) = fastrand::choice(fortunes) {
+            println!("{}", fortune);
+        }
     }
 }
 
