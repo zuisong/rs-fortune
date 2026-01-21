@@ -114,7 +114,33 @@ fn calling_with_empty_file() {
         .args([file.path()])
         .assert()
         .success()
-        .stdout("\n")
+        .stdout("")
+        .dbg();
+}
+
+#[test]
+fn calling_with_actual_content() {
+    let mut file = tempfile::NamedTempFile::new().unwrap();
+    write!(file, "fortune1\n%\nfortune2\n%\n").unwrap();
+
+    cargo_bin_cmd!()
+        .args([file.path()])
+        .assert()
+        .success()
+        .stdout(predicates::str::is_match("fortune1|fortune2").unwrap())
+        .dbg();
+}
+
+#[test]
+fn calling_with_actual_content2() {
+    let mut file = tempfile::NamedTempFile::new().unwrap();
+    write!(file, "fortune1\n%\nfortune2\n").unwrap();
+
+    cargo_bin_cmd!()
+        .args([file.path()])
+        .assert()
+        .success()
+        .stdout(predicates::str::is_match("fortune1|fortune2").unwrap())
         .dbg();
 }
 

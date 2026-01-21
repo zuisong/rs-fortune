@@ -3,7 +3,8 @@ use clap_complete::{Generator, Shell, generate};
 use std::{
     error::Error,
     fs::File,
-    io::{self, IsTerminal, Read, stdin, stdout},
+    io::{self, BufRead, BufReader, IsTerminal, stdin, stdout},
+    mem::take,
     path::Path,
 };
 
@@ -30,14 +31,6 @@ fn print_completions<G: Generator>(g: G, cmd: &mut Command) {
     generate(g, cmd, cmd.get_name().to_string(), &mut stdout());
 }
 
-pub fn read_pipe() -> Option<String> {
-    let mut input = String::new();
-    if !stdin().is_terminal() {
-        stdin().read_to_string(&mut input).ok()?;
-    }
-    (!input.trim().is_empty()).then_some(input.trim().into())
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
@@ -46,11 +39,30 @@ fn main() -> Result<(), Box<dyn Error>> {
             print_completions(shell, &mut Args::command());
         }
         None => {
-            if let Some(input) = read_pipe() {
-                // read fortune data from pipe
-                Fortunes::new(input)?.choose_one();
-            } else if let Some(ref path) = args.fortune_file {
-                Fortunes::from_file(path)?.choose_one();
+            if let Some(path) = args.fortune_file {
+                let file_path = Path::new(&path);
+                if !file_path.exists() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("The fortune file '{path}' does not exist"),
+                    )
+                    .into());
+                }
+                if file_path.is_dir() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!("'{path}' is a directory, not a file"),
+                    )
+                    .into());
+                }
+                let file = File::open(file_path)?;
+                if let Some(fortune) = Fortunes::sample(BufReader::new(file))? {
+                    println!("{}", fortune);
+                }
+            } else if !stdin().is_terminal() {
+                if let Some(fortune) = Fortunes::sample(BufReader::new(stdin()))? {
+                    println!("{}", fortune);
+                }
             } else {
                 Args::command().print_help()?;
             }
@@ -60,45 +72,44 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-struct Fortunes(Vec<String>);
+struct Fortunes;
 
 impl Fortunes {
-    pub fn new(content: String) -> Result<Fortunes, Box<dyn Error>> {
-        let fortunes = content.split("\n%\n").map(|it| it.to_string()).collect();
-        Ok(Self(fortunes))
+    pub fn sample(reader: impl BufRead) -> Result<Option<String>, Box<dyn Error>> {
+        let mut selected: Option<String> = None;
+        let mut current_fortune = String::new();
+        let mut count = 0;
+
+        for line_res in reader.lines() {
+            let line = line_res?;
+            if line.trim() == "%" {
+                Self::consider_fortune(&mut selected, &mut count, &mut current_fortune);
+            } else {
+                if !current_fortune.is_empty() {
+                    current_fortune.push('\n');
+                }
+                current_fortune.push_str(&line);
+            }
+        }
+
+        // Handle the last fortune if the file doesn't end with %
+        Self::consider_fortune(&mut selected, &mut count, &mut current_fortune);
+
+        Ok(selected)
     }
 
-    pub fn from_file(path: &String) -> Result<Fortunes, Box<dyn Error>> {
-        let file_path = Path::new(&path);
-        if !file_path.exists() {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                format!("The fortune file '{path}' does not exist"),
-            )
-            .into());
-        }
-        if file_path.is_dir() {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("'{path}' is a directory, not a file"),
-            )
-            .into());
-        }
-        let mut file = File::open(file_path)?;
-        let mut content = String::new();
-        file.read_to_string(&mut content)?;
-
-        Self::new(content)
-    }
-
-    pub fn choose_one(&self) {
-        let Fortunes(fortunes) = &self;
-        if fortunes.is_empty() {
+    fn consider_fortune(selected: &mut Option<String>, count: &mut usize, current: &mut String) {
+        if current.trim().is_empty() {
+            current.clear();
             return;
         }
 
-        if let Some(fortune) = fastrand::choice(fortunes) {
-            println!("{}", fortune);
+        *count += 1;
+        // Use Reservoir Sampling to pick one fortune with uniform probability 1/n.
+        if fastrand::usize(..*count) == 0 {
+            *selected = Some(take(current));
+        } else {
+            current.clear();
         }
     }
 }
