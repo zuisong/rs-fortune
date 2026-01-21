@@ -1,7 +1,4 @@
-extern crate assert_cmd;
-extern crate predicates;
-
-use assert_cmd::{Command, assert::Assert, crate_name};
+use assert_cmd::{Command, assert::Assert, cargo::cargo_bin_cmd};
 use predicates::{
     prelude::{PredicateBooleanExt as _, predicate},
     str::contains,
@@ -11,6 +8,7 @@ use predicates::{
 fn _test_ok() {
     assert_eq!(2 + 2, 4);
 }
+
 #[test]
 #[should_panic]
 fn _test_error() {
@@ -35,8 +33,7 @@ impl Dbg for Assert {
 
 #[test]
 fn calling_with_not_exists_file() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["wwww.shouldnotwork.com"])
         .assert()
         .failure()
@@ -48,8 +45,7 @@ fn calling_with_not_exists_file() {
 
 #[test]
 fn calling_with_help() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["-h"])
         .assert()
         .success()
@@ -59,18 +55,17 @@ fn calling_with_help() {
 
 #[test]
 fn calling_with_read_dir_from_commandline() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["src"])
         .assert()
         .failure()
         .stderr(contains("'src' is a directory, not a file"))
         .dbg();
 }
+
 #[test]
 fn calling_with_read_file_from_commandline() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["Cargo.toml"])
         .assert()
         .success()
@@ -80,8 +75,7 @@ fn calling_with_read_file_from_commandline() {
 
 #[test]
 fn calling_with_read_file_from_env() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["Cargo.toml"])
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
@@ -92,8 +86,7 @@ fn calling_with_read_file_from_env() {
 
 #[test]
 fn calling_with_read_fortune_from_pipe() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .pipe_stdin("./Cargo.toml")
         .unwrap()
         .assert()
@@ -104,8 +97,7 @@ fn calling_with_read_fortune_from_pipe() {
 
 #[test]
 fn calling_with_print_shell_completions() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["completions", "-s", "zsh"])
         .env("FORTUNE_FILE", "Cargo.toml")
         .assert()
@@ -114,42 +106,35 @@ fn calling_with_print_shell_completions() {
         .dbg();
 }
 
-use std::{fs::File, io::Write};
+use std::io::Write;
 #[test]
 fn calling_with_empty_file() {
-    let file = File::create("empty.txt").unwrap();
-    drop(file);
-    Command::cargo_bin(crate_name!())
-        .unwrap()
-        .args(["empty.txt"])
+    let file = tempfile::NamedTempFile::new().unwrap();
+    cargo_bin_cmd!()
+        .args([file.path()])
         .assert()
         .success()
         .stdout("\n")
         .dbg();
-    std::fs::remove_file("empty.txt").unwrap();
 }
 
 #[test]
 fn calling_with_invalid_encoding() {
-    let mut file = File::create("invalid.txt").unwrap();
+    let mut file = tempfile::NamedTempFile::new().unwrap();
     file.write_all(b"\xFF").unwrap();
-    drop(file);
-    Command::cargo_bin(crate_name!())
-        .unwrap()
-        .args(["invalid.txt"])
+    cargo_bin_cmd!()
+        .args([file.path()])
         .assert()
         .failure()
         .stderr(contains(
             r#"Error: Error { kind: InvalidData, message: "stream did not contain valid UTF-8"#,
         ))
         .dbg();
-    std::fs::remove_file("invalid.txt").unwrap();
 }
 
 #[test]
 fn calling_with_non_existent_shell() {
-    Command::cargo_bin(crate_name!())
-        .unwrap()
+    cargo_bin_cmd!()
         .args(["completions", "-s", "invalid"])
         .assert()
         .failure()

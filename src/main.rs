@@ -102,6 +102,3 @@ impl Fortunes {
         }
     }
 }
-
-#[cfg(test)]
-mod tests;
