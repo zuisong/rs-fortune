@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     println!("{}", fortune);
                 }
             } else if !stdin().is_terminal() {
-                if let Some(fortune) = Fortunes::sample(BufReader::new(stdin()))? {
+                if let Some(fortune) = Fortunes::sample(stdin().lock())? {
                     println!("{}", fortune);
                 }
             } else {
